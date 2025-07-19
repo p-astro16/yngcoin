@@ -1,0 +1,33 @@
+{
+    "name": "YNG Token Trading Platform",
+    "short_name": "YNG.trade",
+    "description": "Trade YNG tokens with AMM-based pricing",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a1a2e",
+    "theme_color": "#1a1a2e",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%231a1a2e'/><text x='96' y='120' font-size='80' text-anchor='middle' fill='%2300d2ff'>💎</text></svg>",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%231a1a2e'/><text x='256' y='320' font-size='200' text-anchor='middle' fill='%2300d2ff'>💎</text></svg>",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["finance", "utilities", "productivity"],
+    "screenshots": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect width='540' height='720' fill='%231a1a2e'/><text x='270' y='360' font-size='60' text-anchor='middle' fill='%2300d2ff'>YNG Trading Platform</text></svg>",
+            "sizes": "540x720",
+            "type": "image/svg+xml",
+            "form_factor": "narrow"
+        }
+    ]
+}

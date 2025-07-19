@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YNG Token Trading Platform</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Trade YNG tokens with AMM-based pricing">
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="logo">
+                <span class="logo-icon">💎</span>
+                <h1>YNG.trade</h1>
+            </div>
+            <form id="loginForm" class="login-form">
+                <h2>Enter Trading Arena</h2>
+                <div class="form-group">
+                    <input type="text" id="usernameInput" placeholder="Enter your username" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Start Trading</button>
+            </form>
+            <div class="login-info">
+                <p>🎁 New traders get €100 starting balance</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Trading Interface -->
+    <div id="mainApp" class="main-app hidden">
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="nav-left">
+                <div class="logo-nav">
+                    <span class="logo-icon">💎</span>
+                    <span class="logo-text">YNG.trade</span>
+                </div>
+                <div class="price-display">
+                    <span class="token-name">YNG</span>
+                    <span id="currentPrice" class="current-price">€1.00</span>
+                    <span id="priceChange" class="price-change">+0.00%</span>
+                </div>
+            </div>
+            <div class="nav-right">
+                <div class="user-info">
+                    <span id="userBalance" class="user-balance">€100.00</span>
+                    <span id="userTokens" class="user-tokens">0 YNG</span>
+                    <span id="currentUser" class="username"></span>
+                </div>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel: Chart and Market Info -->
+            <div class="left-panel">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>YNG/EUR Price Chart</h3>
+                        <div class="timeframe-controls">
+                            <button class="timeframe-btn active" data-timeframe="1h">1H</button>
+                            <button class="timeframe-btn" data-timeframe="4h">4H</button>
+                            <button class="timeframe-btn" data-timeframe="1d">1D</button>
+                            <button class="timeframe-btn" data-timeframe="7d">7D</button>
+                        </div>
+                    </div>
+                    <canvas id="priceChart"></canvas>
+                </div>
+
+                <div class="market-info">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Market Cap</span>
+                            <span id="marketCap" class="info-value">€10,000</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">24h Volume</span>
+                            <span id="volume24h" class="info-value">€0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Liquidity</span>
+                            <span id="liquidityPool" class="info-value">€1,000</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Total Supply</span>
+                            <span class="info-value">10,000 YNG</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Trades -->
+                <div class="recent-trades">
+                    <h3>Recent Trades</h3>
+                    <div id="tradesContainer" class="trades-list"></div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Trading and Leaderboard -->
+            <div class="right-panel">
+                <!-- Trading Panel -->
+                <div class="trading-panel">
+                    <div class="trading-tabs">
+                        <button class="tab-btn active" data-tab="buy">Buy</button>
+                        <button class="tab-btn" data-tab="sell">Sell</button>
+                    </div>
+
+                    <div class="tab-content">
+                        <div id="buyTab" class="tab-pane active">
+                            <div class="amount-input">
+                                <label>Amount (EUR)</label>
+                                <input type="number" id="buyAmount" placeholder="0.00" step="0.01" min="0.01">
+                                <div class="quick-amounts">
+                                    <button class="quick-btn" data-amount="10">€10</button>
+                                    <button class="quick-btn" data-amount="25">€25</button>
+                                    <button class="quick-btn" data-amount="50">€50</button>
+                                    <button class="quick-btn" data-amount="100">€100</button>
+                                </div>
+                            </div>
+                            <div class="trade-info">
+                                <div class="info-row">
+                                    <span>You'll receive:</span>
+                                    <span id="buyEstimate">0 YNG</span>
+                                </div>
+                                <div class="info-row">
+                                    <span>Price impact:</span>
+                                    <span id="buyPriceImpact">0.00%</span>
+                                </div>
+                            </div>
+                            <button id="buyBtn" class="btn btn-success btn-full">Buy YNG</button>
+                        </div>
+
+                        <div id="sellTab" class="tab-pane">
+                            <div class="amount-input">
+                                <label>Amount (YNG)</label>
+                                <input type="number" id="sellAmount" placeholder="0.00" step="0.01" min="0.01">
+                                <div class="balance-info">
+                                    <span>Balance: <span id="sellBalance">0 YNG</span></span>
+                                    <button class="max-btn">MAX</button>
+                                </div>
+                            </div>
+                            <div class="trade-info">
+                                <div class="info-row">
+                                    <span>You'll receive:</span>
+                                    <span id="sellEstimate">€0.00</span>
+                                </div>
+                                <div class="info-row">
+                                    <span>Price impact:</span>
+                                    <span id="sellPriceImpact">0.00%</span>
+                                </div>
+                            </div>
+                            <button id="sellBtn" class="btn btn-danger btn-full">Sell YNG</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leaderboard -->
+                <div class="leaderboard">
+                    <h3>🏆 Top Holders</h3>
+                    <div id="leaderboardContainer" class="leaderboard-list"></div>
+                </div>
+            </div>
+        </main>
+    </main>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
