@@ -281,11 +281,19 @@ class TradingPlatform {
         document.getElementById('userTokens').textContent = `${this.currentUser.yngTokens.toFixed(4)} YNG`;
         document.getElementById('currentPrice').textContent = `€${currentPrice.toFixed(6)}`;
         
+        // Update chart price display
+        document.getElementById('chartCurrentPrice').textContent = `€${currentPrice.toFixed(6)}`;
+        
         // Update price change
         const priceChange = this.calculatePriceChange();
         const priceChangeEl = document.getElementById('priceChange');
+        const chartPriceChangeEl = document.getElementById('chartPriceChange');
+        
         priceChangeEl.textContent = `${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)}%`;
         priceChangeEl.className = `price-change ${priceChange >= 0 ? 'positive' : 'negative'}`;
+        
+        chartPriceChangeEl.textContent = `${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)}%`;
+        chartPriceChangeEl.className = `chart-price-change ${priceChange >= 0 ? 'positive' : 'negative'}`;
         
         // Update market info
         document.getElementById('marketCap').textContent = `€${marketCap.toFixed(0)}`;
@@ -381,22 +389,74 @@ class TradingPlatform {
         this.chart = new Chart(ctx, {
             type: 'line',
             data: {
-                datasets: [{
-                    label: 'YNG Price (EUR)',
-                    data: [],
-                    borderColor: '#00d2ff',
-                    backgroundColor: 'rgba(0, 210, 255, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
+                datasets: [
+                    {
+                        label: 'YNG Price',
+                        data: [],
+                        borderColor: '#00ff88',
+                        backgroundColor: (context) => {
+                            const chart = context.chart;
+                            const {ctx, chartArea} = chart;
+                            if (!chartArea) return null;
+                            
+                            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                            gradient.addColorStop(0, 'rgba(0, 255, 136, 0.3)');
+                            gradient.addColorStop(0.5, 'rgba(0, 255, 136, 0.1)');
+                            gradient.addColorStop(1, 'rgba(0, 255, 136, 0.01)');
+                            return gradient;
+                        },
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#00ff88',
+                        pointHoverBorderColor: '#ffffff',
+                        pointHoverBorderWidth: 2
+                    },
+                    {
+                        label: 'Volume',
+                        data: [],
+                        type: 'bar',
+                        backgroundColor: 'rgba(0, 210, 255, 0.2)',
+                        borderColor: 'rgba(0, 210, 255, 0.4)',
+                        borderWidth: 1,
+                        yAxisID: 'volume',
+                        order: 1
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                backgroundColor: 'rgba(26, 26, 46, 0.95)',
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#00ff88',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            title: function(context) {
+                                const date = new Date(context[0].parsed.x);
+                                return date.toLocaleString();
+                            },
+                            label: function(context) {
+                                if (context.datasetIndex === 0) {
+                                    return `Price: €${context.parsed.y.toFixed(6)}`;
+                                } else {
+                                    return `Volume: €${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -404,32 +464,67 @@ class TradingPlatform {
                         type: 'time',
                         time: {
                             displayFormats: {
+                                minute: 'HH:mm',
                                 hour: 'HH:mm',
                                 day: 'MMM dd'
                             }
                         },
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
                         },
                         ticks: {
-                            color: 'rgba(255, 255, 255, 0.7)'
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            font: {
+                                size: 11
+                            },
+                            maxTicksLimit: 6
                         }
                     },
                     y: {
+                        position: 'right',
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
                         },
                         ticks: {
-                            color: 'rgba(255, 255, 255, 0.7)',
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            font: {
+                                size: 11
+                            },
                             callback: function(value) {
                                 return '€' + value.toFixed(6);
-                            }
+                            },
+                            maxTicksLimit: 8
+                        }
+                    },
+                    volume: {
+                        type: 'linear',
+                        position: 'left',
+                        max: function(context) {
+                            const maxVolume = Math.max(...context.chart.data.datasets[1].data.map(d => d.y || 0));
+                            return maxVolume * 4; // Make volume bars smaller relative to chart
+                        },
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            display: false
                         }
                     }
                 },
                 interaction: {
                     intersect: false,
                     mode: 'index'
+                },
+                elements: {
+                    point: {
+                        radius: 0
+                    }
+                },
+                animation: {
+                    duration: 750,
+                    easing: 'easeOutQuart'
                 }
             }
         });
@@ -440,8 +535,11 @@ class TradingPlatform {
     updateChart() {
         if (!this.chart) return;
         
-        const data = this.getChartData(this.chartTimeframe);
-        this.chart.data.datasets[0].data = data;
+        const priceData = this.getChartData(this.chartTimeframe);
+        const volumeData = this.getVolumeData(this.chartTimeframe);
+        
+        this.chart.data.datasets[0].data = priceData;
+        this.chart.data.datasets[1].data = volumeData;
         this.chart.update('none');
     }
 
@@ -480,6 +578,55 @@ class TradingPlatform {
             x: point.timestamp,
             y: point.price
         }));
+    }
+
+    getVolumeData(timeframe) {
+        const now = Date.now();
+        let startTime;
+        let interval;
+        
+        switch (timeframe) {
+            case '1h':
+                startTime = now - (60 * 60 * 1000);
+                interval = 5 * 60 * 1000; // 5 minute intervals
+                break;
+            case '4h':
+                startTime = now - (4 * 60 * 60 * 1000);
+                interval = 15 * 60 * 1000; // 15 minute intervals
+                break;
+            case '1d':
+                startTime = now - (24 * 60 * 60 * 1000);
+                interval = 60 * 60 * 1000; // 1 hour intervals
+                break;
+            case '7d':
+                startTime = now - (7 * 24 * 60 * 60 * 1000);
+                interval = 4 * 60 * 60 * 1000; // 4 hour intervals
+                break;
+            default:
+                startTime = now - (60 * 60 * 1000);
+                interval = 5 * 60 * 1000;
+        }
+        
+        const filteredTrades = this.trades.filter(trade => trade.timestamp >= startTime);
+        const volumePoints = [];
+        
+        // Group trades by time intervals
+        for (let time = startTime; time <= now; time += interval) {
+            const intervalTrades = filteredTrades.filter(trade => 
+                trade.timestamp >= time && trade.timestamp < time + interval
+            );
+            
+            const volume = intervalTrades.reduce((sum, trade) => sum + trade.eurAmount, 0);
+            
+            if (volume > 0 || volumePoints.length > 0) {
+                volumePoints.push({
+                    x: time + (interval / 2), // Center of interval
+                    y: volume
+                });
+            }
+        }
+        
+        return volumePoints;
     }
 
     changeTimeframe(timeframe) {
