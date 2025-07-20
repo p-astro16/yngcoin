@@ -55,6 +55,10 @@
                 </div>
             </div>
             <div class="nav-right">
+                <div class="code-input-section">
+                    <input type="text" id="codeInput" placeholder="Enter SHA256 code for €EUR" class="code-input">
+                    <button id="redeemBtn" class="btn btn-code">💰</button>
+                </div>
                 <div class="user-info">
                     <span id="userBalance" class="user-balance">€100.00</span>
                     <span id="userTokens" class="user-tokens">0 YNG</span>
@@ -70,7 +74,13 @@
             <div class="left-panel">
                 <div class="chart-container">
                     <div class="chart-header">
-                        <h3>YNG/EUR Price Chart</h3>
+                        <div class="chart-title-section">
+                            <h3>YNG/EUR</h3>
+                            <div class="current-price-display">
+                                <span id="chartCurrentPrice" class="chart-price">€0.100000</span>
+                                <span id="chartPriceChange" class="chart-price-change">+0.00%</span>
+                            </div>
+                        </div>
                         <div class="timeframe-controls">
                             <button class="timeframe-btn active" data-timeframe="1h">1H</button>
                             <button class="timeframe-btn" data-timeframe="4h">4H</button>
